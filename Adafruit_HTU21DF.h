@@ -39,6 +39,7 @@ class Adafruit_HTU21DF {
   void reset(void);
  private:
   boolean readData(void);
+  uint8_t computeCrc(uint8_t* data, int start, int length);
   float humidity, temp;
 };
 

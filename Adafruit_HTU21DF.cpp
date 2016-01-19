@@ -60,6 +60,7 @@ float Adafruit_HTU21DF::readTemperature(void) {
   t |= Wire.read();
 
   uint8_t crc = Wire.read();
+  uint8_t computedCrc = computeCrc((uint8_t*)&t, 0, 2);
 
   float temp = t;
   temp *= 175.72;
@@ -86,6 +87,7 @@ float Adafruit_HTU21DF::readHumidity(void) {
   h |= Wire.read();
 
   uint8_t crc = Wire.read();
+  uint8_t computedCrc = computeCrc((uint8_t*)&h, 0, 2);
 
   float hum = h;
   hum *= 125;
@@ -95,6 +97,44 @@ float Adafruit_HTU21DF::readHumidity(void) {
   return hum;
 }
 
+
+uint8_t computeCrc(uint8_t* data, int start, int length)
+{
+	uint8_t crc[8];
+	
+	for (int c = 0; c < 8; c++)
+	{ 
+		crc[c] = 0; 
+	}
+	
+	int bitOffset = 0;
+
+	for (int i = 0; i < 8 * length; i++)
+	{
+		uint8_t current = data[start + i / 8];
+		int bitPosition = 7 - bitOffset++ % 8;
+		uint8_t mask = 1;
+		uint8_t invert = ((current >> bitPosition) & mask) ^ crc[7];
+		crc[7] = crc[6];
+		crc[6] = crc[5];
+		crc[5] = ((crc[4] ^ invert) & 0x1);
+		crc[4] = ((crc[3] ^ invert) & 0x1);
+		crc[3] = crc[2];
+		crc[2] = crc[1];
+		crc[1] = crc[0];
+		crc[0] = invert;
+	}
+
+	uint8_t final = 0;
+	
+	for (int f = 7; f >= 0; f--)
+	{
+		final |= crc[f];
+		final = (final << 1);
+	}
+
+	return final;
+}
 
 
 /*********************************************************************/
